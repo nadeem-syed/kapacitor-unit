@@ -5,25 +5,30 @@ package test
 
 import (
 	"fmt"
+	"regexp"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/gpestana/kapacitor-unit/io"
 	"github.com/gpestana/kapacitor-unit/task"
-	"time"
-	"regexp"
+	"github.com/influxdata/kapacitor/client/v1"
 )
 
 type Test struct {
-	Name     string
-	TaskName string `yaml:"task_name,omitempty"`
-	Data     []string
-	RecId    string `yaml:"recording_id"`
-	Expects  Result
-	Result   Result
-	Db       string
-	Rp       string
-	Type     string
-	Task     task.Task
-	Clock    string `yaml:"clock"`
+	Name         string
+	TaskName     string `yaml:"task_name,omitempty"`
+	TemplateName string `yaml:"template_name,omitempty"`
+	Data         []string
+	RecId        string `yaml:"recording_id"`
+	Expects      Result
+	Result       Result
+	Db           string
+	Rp           string
+	Type         string
+	Task         task.Task
+	TaskVars     client.TaskVars
+	Template     task.Template
+	Clock        string `yaml:"clock"`
 }
 
 func NewTest() Test {
@@ -134,7 +139,6 @@ func (t *Test) setup(k io.Kapacitor, i io.Influxdb) error {
 		"type":   t.Type,
 		"script": t.Task.Script,
 		"status": "enabled",
-                "record_id": t.RecId,
 	}
 
 	dbrp, _ := regexp.MatchString(`(?m:^dbrp \"\w+\"\.\"\w+\"$)`, t.Task.Script)

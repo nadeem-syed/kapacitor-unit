@@ -10,3 +10,5 @@ require (
 	gopkg.in/h2non/gock.v1 v1.0.15
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+replace github.com/gpestana/kapacitor-unit => github.com/nadeem-syed/kapacitor-unit v0.0.0

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 type Status struct {
@@ -65,6 +66,35 @@ func (k Kapacitor) Load(f map[string]interface{}) error {
 	return nil
 }
 
+func (k Kapacitor) LoadTemplates(f map[string]interface{}) error {
+	glog.Info("DEBUG:: Kapacitor loading task templates: ", f["id"])
+	// Replaces '.every()' if type of script is batch
+	if f["type"] == "batch" {
+		str, ok := f["script"].(string)
+		if ok != true {
+			return errors.New("Task Load Templates: script is not of type string")
+		}
+		f["script"] = batchReplaceEvery(str)
+
+		glog.Info("DEBUG:: batch script after replace: ", f["script"])
+	}
+	j, err := json.Marshal(f)
+	if err != nil {
+		return err
+	}
+	u := k.Host + templates
+	res, err := k.Client.Post(u, "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 200 {
+		r, _ := ioutil.ReadAll(res.Body)
+		return errors.New(res.Status + ":: " + string(r))
+	}
+	return nil
+}
+
 // Modify Task
 func (k Kapacitor) ModifyTasks(f map[string]interface{}) error {
 	glog.Info("DEBUG:: Kapacitor modify existing task: ", f["id"])
@@ -102,7 +132,6 @@ func (k Kapacitor) Replay(f map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
-
 
 	if res.StatusCode != 200 {
 		r, _ := ioutil.ReadAll(res.Body)

@@ -10,7 +10,9 @@ type Config struct {
 	//Path for test definitions YAML file
 	TestsPath string
 	// Path for directory where TICKscripts are
-	ScriptsDir    string
+	ScriptsDir string
+	// Path for directory where TICKscripts templates are
+	TemplatesDir  string
 	InfluxdbHost  string
 	KapacitorHost string
 }
@@ -35,9 +37,10 @@ func Load() *Config {
 
 	// set default values
 	conf := Config{
-		TestsPath: envOrDefault("KU_TEST_PATH",""),
-		ScriptsDir: envOrDefault("KU_SCRIPTS_DIR", ""),
-		InfluxdbHost: envOrDefault("KU_INFLUX_HOST", "http://localhost:8086"),
+		TestsPath:     envOrDefault("KU_TEST_PATH", ""),
+		ScriptsDir:    envOrDefault("KU_SCRIPTS_DIR", ""),
+		TemplatesDir:  envOrDefault("KU_TEMPLATES_DIR", ""),
+		InfluxdbHost:  envOrDefault("KU_INFLUX_HOST", "http://localhost:8086"),
 		KapacitorHost: envOrDefault("KU_KAPACITOR_HOST", "http://localhost:9092"),
 	}
 
@@ -47,6 +50,7 @@ func Load() *Config {
 		"Kapacitor host")
 	testsPath := flag.String("tests", "", "Tests definition file")
 	scriptsDir := flag.String("dir", "", "TICKscripts directory")
+	templatesDir := flag.String("templates", "", "TICKScript template directory")
 
 	flag.Parse()
 
@@ -60,6 +64,10 @@ func Load() *Config {
 
 	if *testsPath != "" {
 		conf.TestsPath = *testsPath
+	}
+
+	if *templatesDir != "" {
+		conf.TemplatesDir = *templatesDir
 	}
 
 	if *scriptsDir != "" {

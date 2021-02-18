@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/fatih/color"
 	"github.com/gpestana/kapacitor-unit/cli"
 	"github.com/gpestana/kapacitor-unit/io"
 	"github.com/gpestana/kapacitor-unit/task"
 	"github.com/gpestana/kapacitor-unit/test"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type TestCollection []test.Test
@@ -28,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading test configurations: ", err)
 	}
-	err = initTests(tests, f.ScriptsDir)
+	err = initTests(tests, f.ScriptsDir, f.TemplatesDir)
 	if err != nil {
 		log.Fatal("Init Tests failed: ", err)
 	}
@@ -127,13 +128,30 @@ func testConfig(fileName string) (TestCollection, error) {
 }
 
 //Populates each of Test in Configuration struct with an initialized Task
-func initTests(c TestCollection, p string) error {
+func initTests(c TestCollection, taskPath, templatePath string) error {
 	for i, t := range c {
-		tk, err := task.New(t.TaskName, p)
-		if err != nil {
-			return err
+		switch ext := filepath.Ext(t.TaskName); ext {
+		case ".tick":
+			tk, err := task.New(t.TaskName, taskPath)
+			if err != nil {
+				return err
+			}
+			c[i].Task = *tk
+		case ".yml", ".json", ".yaml":
+			tv, err := task.NewTaskVars(t.TaskName, taskPath)
+			if err != nil {
+				return err
+			}
+			c[i].TaskVars = *tv
+			tem, err := task.NewTemplate(t.TemplateName, templatePath)
+			if err != nil {
+				return err
+			}
+			c[i].Template = *tem
+		default:
+			continue
 		}
-		c[i].Task = *tk
+
 	}
 	return nil
 }
